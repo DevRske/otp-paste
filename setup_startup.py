@@ -1,5 +1,7 @@
 import os
 import sys
+from pathlib import Path
+
 import winreg
 
 # winreg path for startup
@@ -11,8 +13,15 @@ def get_script_path():
     return os.path.join(current_dir, "authenticator_cli.py")
 
 def get_pythonw_path():
-    python_exe = sys.executable
-    return python_exe.replace("python.exe", "pythonw.exe")
+    python_executable = Path(sys.executable)
+    if python_executable.name.lower() == "pythonw.exe":
+        return str(python_executable)
+
+    pythonw_executable = python_executable.with_name("pythonw.exe")
+    if pythonw_executable.exists():
+        return str(pythonw_executable)
+
+    return str(python_executable)
 
 def enable_startup():
     script_path = get_script_path()

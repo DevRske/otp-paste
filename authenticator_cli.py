@@ -47,24 +47,48 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 
+def validate_hotkey(hotkey):
+    normalized_hotkey = hotkey.strip().lower()
+    keyboard.parse_hotkey_combinations(normalized_hotkey)
+    return normalized_hotkey
+
+
+def fallback_to_default_hotkey(reason):
+    message = f"Warning: {reason}"
+    print(message)
+    LOGGER.warning(message)
+    fallback_message = f"Falling back to default hotkey: {DEFAULT_HOTKEY}"
+    print(fallback_message)
+    LOGGER.warning(fallback_message)
+
+    try:
+        return validate_hotkey(DEFAULT_HOTKEY)
+    except (AttributeError, TypeError, ValueError) as exc:
+        fatal_message = f"Error: Default hotkey '{DEFAULT_HOTKEY}' is invalid."
+        print(fatal_message)
+        LOGGER.error("%s %s", fatal_message, exc)
+        raise RuntimeError(fatal_message) from exc
+
+
 def load_hotkey():
     if not CONFIG_PATH.exists():
-        return DEFAULT_HOTKEY
+        return validate_hotkey(DEFAULT_HOTKEY)
 
     try:
         config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"Warning: Failed to read {CONFIG_PATH.name}: {exc}")
-        print(f"Falling back to default hotkey: {DEFAULT_HOTKEY}")
-        return DEFAULT_HOTKEY
+        return fallback_to_default_hotkey(f"Failed to read {CONFIG_PATH.name}: {exc}")
 
     hotkey = config.get("hotkey", DEFAULT_HOTKEY)
     if not isinstance(hotkey, str) or not hotkey.strip():
-        print(f"Warning: Invalid hotkey in {CONFIG_PATH.name}.")
-        print(f"Falling back to default hotkey: {DEFAULT_HOTKEY}")
-        return DEFAULT_HOTKEY
+        return fallback_to_default_hotkey(f"Invalid hotkey in {CONFIG_PATH.name}.")
 
-    return hotkey.strip().lower()
+    try:
+        return validate_hotkey(hotkey)
+    except (AttributeError, TypeError, ValueError) as exc:
+        return fallback_to_default_hotkey(
+            f"Failed to parse hotkey '{hotkey}' from {CONFIG_PATH.name}: {exc}"
+        )
 
 
 def release_hotkey_keys(hotkey):
@@ -106,10 +130,15 @@ print(f"Authenticator is running! Press {HOTKEY} to type your code.")
 print("Close this window to stop the script.")
 LOGGER.info("Authenticator started with hotkey: %s", HOTKEY)
 
-keyboard.add_hotkey(
-    HOTKEY,
-    lambda: type_my_code(HOTKEY),
-    suppress=False,
-    trigger_on_release=True,
-)
+try:
+    keyboard.add_hotkey(
+        HOTKEY,
+        lambda: type_my_code(HOTKEY),
+        suppress=False,
+        trigger_on_release=True,
+    )
+except Exception:
+    LOGGER.exception("Failed to register hotkey: %s", HOTKEY)
+    raise
+
 keyboard.wait()
