@@ -109,7 +109,7 @@ LOGGER.info("Authenticator started with hotkey: %s", HOTKEY)
 keyboard.add_hotkey(
     HOTKEY,
     lambda: type_my_code(HOTKEY),
-    suppress=True,
+    suppress=False,
     trigger_on_release=True,
 )
 keyboard.wait()
