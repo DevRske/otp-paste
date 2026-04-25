@@ -100,6 +100,8 @@ python setup_startup.py
 
 This lets you enable or disable launching the script automatically at login.
 
+Note: enabling startup does not launch the script immediately. The setup only registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, so it starts on the next Windows sign-in. In practice, you need to sign out and sign back in, or restart the PC. A full reboot is not otherwise required.
+
 ### Paste a Code
 
 While the script is running:
