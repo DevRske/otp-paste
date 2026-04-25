@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 
@@ -9,6 +10,7 @@ import pyotp
 
 DEFAULT_HOTKEY = "ctrl+alt+a"
 CONFIG_PATH = Path(__file__).with_name("config.json")
+LOG_PATH = Path(__file__).with_name("authenticator.log")
 PYAUTOGUI_KEY_MAP = {
     "control": "ctrl",
     "left ctrl": "ctrlleft",
@@ -21,6 +23,28 @@ PYAUTOGUI_KEY_MAP = {
     "left windows": "winleft",
     "right windows": "winright",
 }
+MODIFIER_KEYS = {
+    "ctrl",
+    "control",
+    "alt",
+    "shift",
+    "windows",
+    "left ctrl",
+    "right ctrl",
+    "left alt",
+    "right alt",
+    "left shift",
+    "right shift",
+    "left windows",
+    "right windows",
+}
+
+logging.basicConfig(
+    filename=LOG_PATH,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+LOGGER = logging.getLogger(__name__)
 
 
 def load_hotkey():
@@ -46,7 +70,7 @@ def load_hotkey():
 def release_hotkey_keys(hotkey):
     for key in hotkey.split("+"):
         normalized_key = key.strip().lower()
-        if not normalized_key:
+        if not normalized_key or normalized_key not in MODIFIER_KEYS:
             continue
 
         pyautogui_key = PYAUTOGUI_KEY_MAP.get(normalized_key, normalized_key)
@@ -57,23 +81,35 @@ def release_hotkey_keys(hotkey):
 
 
 def type_my_code(hotkey):
-    secret = keyring.get_password("AuthApp", "MySecretKey")
-    if not secret:
-        print("Error: Secret not found in Windows. Run setup_secrets.py first.")
-        return
+    try:
+        secret = keyring.get_password("AuthApp", "MySecretKey")
+        if not secret:
+            message = "Error: Secret not found in Windows. Run setup_secrets.py first."
+            print(message)
+            LOGGER.error(message)
+            return
 
-    time.sleep(0.2)
-    release_hotkey_keys(hotkey)
+        time.sleep(0.2)
+        release_hotkey_keys(hotkey)
 
-    pyautogui.click()
-    totp = pyotp.TOTP(secret)
-    pyautogui.write(totp.now())
+        pyautogui.click()
+        totp = pyotp.TOTP(secret)
+        pyautogui.write(totp.now())
+        LOGGER.info("Typed a TOTP code successfully.")
+    except Exception:
+        LOGGER.exception("Failed to type a TOTP code.")
 
 
 HOTKEY = load_hotkey()
 
 print(f"Authenticator is running! Press {HOTKEY} to type your code.")
 print("Close this window to stop the script.")
+LOGGER.info("Authenticator started with hotkey: %s", HOTKEY)
 
-keyboard.add_hotkey(HOTKEY, lambda: type_my_code(HOTKEY))
+keyboard.add_hotkey(
+    HOTKEY,
+    lambda: type_my_code(HOTKEY),
+    suppress=True,
+    trigger_on_release=True,
+)
 keyboard.wait()

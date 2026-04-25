@@ -111,3 +111,5 @@ While the script is running:
 3. Press your configured hotkey.
 
 The current TOTP code will be generated and typed automatically.
+
+If the auto-started background version behaves unexpectedly, check `authenticator.log` in the project folder. Startup-time and hotkey errors are written there.
