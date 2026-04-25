@@ -68,6 +68,20 @@ python setup_secrets.py
 
 This saves the secret to Windows Credential Manager.
 
+3. Optional: adjust the hotkey in `config.json`:
+
+```json
+{
+  "hotkey": "ctrl+alt+a"
+}
+```
+
+Change the value to any shortcut format supported by the Python `keyboard` library, for example:
+
+- `ctrl+alt+a`
+- `ctrl+shift+v`
+- `alt+q`
+
 ## Usage
 
 ### Run Manually
@@ -76,7 +90,7 @@ This saves the secret to Windows Credential Manager.
 python authenticator_cli.py
 ```
 
-The script will stay running and listen for the hotkey.
+The script will stay running and listen for the hotkey defined in `config.json`.
 
 ### Start Automatically With Windows
 
@@ -92,6 +106,6 @@ While the script is running:
 
 1. Open the page or app where the TOTP code is required.
 2. Place the cursor in the code input field.
-3. Press `Ctrl + Alt + A`.
+3. Press your configured hotkey.
 
 The current TOTP code will be generated and typed automatically.
