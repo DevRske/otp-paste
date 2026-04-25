@@ -8,7 +8,7 @@ import keyring
 import pyautogui
 import pyotp
 
-DEFAULT_HOTKEY = "ctrl+alt+a"
+DEFAULT_HOTKEY = "alt+0"
 CONFIG_PATH = Path(__file__).with_name("config.json")
 LOG_PATH = Path(__file__).with_name("authenticator.log")
 PYAUTOGUI_KEY_MAP = {
@@ -106,6 +106,7 @@ def release_hotkey_keys(hotkey):
 
 def type_my_code(hotkey):
     try:
+        LOGGER.info("Hotkey triggered: %s", hotkey)
         secret = keyring.get_password("AuthApp", "MySecretKey")
         if not secret:
             message = "Error: Secret not found in Windows. Run setup_secrets.py first."
@@ -114,7 +115,10 @@ def type_my_code(hotkey):
             return
 
         time.sleep(0.2)
-        release_hotkey_keys(hotkey)
+        try:
+            keyboard.stash_state()
+        except Exception:
+            release_hotkey_keys(hotkey)
 
         pyautogui.click()
         totp = pyotp.TOTP(secret)
@@ -134,7 +138,7 @@ try:
     keyboard.add_hotkey(
         HOTKEY,
         lambda: type_my_code(HOTKEY),
-        suppress=False,
+        suppress=True,
         trigger_on_release=True,
     )
 except Exception:

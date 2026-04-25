@@ -8,7 +8,7 @@ The project was initially built for Kaunas University of Technology (KTU) login 
 
 - Stores your TOTP secret locally in Windows Credential Manager
 - Generates the current code when needed
-- Types the code into the active input field after pressing `Ctrl + Alt + A`
+- Types the code into the active input field after pressing `Alt + 0`
 
 ## Prerequisites
 
@@ -72,15 +72,19 @@ This saves the secret to Windows Credential Manager.
 
 ```json
 {
-  "hotkey": "ctrl+alt+a"
+  "hotkey": "alt+0"
 }
 ```
 
-Change the value to any shortcut format supported by the Python `keyboard` library, for example:
+Change the value to any shortcut format supported by the Python `keyboard` library.
 
-- `ctrl+alt+a`
-- `ctrl+shift+v`
+Avoid `Ctrl`-based hotkeys for now. They are currently unreliable in this app and can interfere with input handling. Prefer `Alt+something` combinations instead.
+
+Examples:
+
+- `alt+0`
 - `alt+q`
+- `alt+x`
 
 ## Usage
 
