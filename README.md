@@ -1,55 +1,97 @@
-# KTU TOTP Automator
+# OTP Paste Helper
 
-A background utility designed to automate the entry of Time-Based One-Time Passwords (TOTP) for Kaunas University of Technology (KTU) login systems. This tool stores your secret key in the Windows Credential Manager and automatically inputs the current 6-digit code via a global keyboard shortcut.
+A small Windows utility that stores a TOTP secret in Windows Credential Manager and pastes the current 6-digit code with a global keyboard shortcut.
 
-## Important Notice: Secret Key Generation
+The project was initially built for Kaunas University of Technology (KTU) login systems, but it can also be used with other services that rely on standard TOTP authenticator codes.
 
-To utilize this script, you must obtain your raw TOTP secret key from the KTU login portal.
+## What It Does
 
-**Warning:** Accessing the configuration to view the secret key requires initiating a "re-setup" of your authenticator app. This action generates a completely new secret key, rendering your existing mobile configuration defunct. You must scan the newly generated QR code with your mobile authenticator app simultaneously to ensure you retain access on your mobile device.
+- Stores your TOTP secret locally in Windows Credential Manager
+- Generates the current code when needed
+- Types the code into the active input field after pressing `Ctrl + Alt + A`
 
 ## Prerequisites
 
-* Windows OS
-* Python 3.x
+- Windows
+- Python 3.x
+- A service that uses standard TOTP-based 2FA
 
-## Setup Instructions
+## Getting Your TOTP Secret
 
-1. **Obtain the Secret Key:**
-   * Navigate to the KTU login system and enter your login credentials.
-   * When it asks to enter the auth code - select the option to re-setup your authenticator app.
-   * Extract the raw text secret by scanning the QR code with a standard QR reader and copy the string immediately following \`secret=\`.
-   * **Note:** You must also scan this new QR code with your mobile authenticator app.
+This tool needs the raw TOTP secret, not just the 6-digit code shown in an authenticator app.
 
-2. **Install Dependencies:**
-   \`\`\`
-   pip install -r requirements.txt
-   \`\`\`
+### General Method
 
-3. **Store Credentials Securely:**
-   Run the setup script. This will prompt you for your secret key and store it securely within the Windows Credential Manager.
-   \`\`\`
-   python setup_secrets.py
-   \`\`\`
+For many services, the secret is shown during 2FA setup as either:
+
+- a QR code
+- a manual setup key
+- or a URI containing `secret=...`
+
+If the site shows a QR code only, you can scan it with a QR reader and copy the value after `secret=` from the resulting OTP URI.
+
+Example:
+
+```text
+otpauth://totp/Example:email@example.com?secret=ABC123...
+```
+
+In that case, the part after `secret=` is the value this script needs.
+
+### KTU-Specific Notes
+
+KTU was the original target for this project. In KTU systems, getting the secret may require starting the authenticator setup again from the login portal.
+
+Important: re-setting up the authenticator can generate a new secret and invalidate the one currently stored in your mobile authenticator app. If you do this, make sure you also scan the newly generated QR code with your phone so you do not lose access.
+
+Typical KTU flow:
+
+1. Log in to the KTU system.
+2. When prompted for the authenticator code, choose the option to re-set up the authenticator.
+3. Read the QR code with a QR scanner.
+4. Copy the value after `secret=`.
+5. Also add the new QR code to your authenticator app.
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Store your secret securely:
+
+```bash
+python setup_secrets.py
+```
+
+This saves the secret to Windows Credential Manager.
 
 ## Usage
 
-### Manual Execution
-Run the core script to start the listener in your current terminal session:
-\`\`\`
+### Run Manually
+
+```bash
 python authenticator_cli.py
-\`\`\`
+```
 
-### Automated Execution (Windows Startup)
-To configure the application to launch silently in the background every time Windows boots, run the startup manager:
-\`\`\`
-python manage_startup.py
-\`\`\`
+The script will stay running and listen for the hotkey.
 
-### Triggering the Automation
-While the application is running:
-1. Navigate to the KTU login page.
-2. Place your cursor in the TOTP input field.
-3. Press \`Ctrl + Alt + A\`.
+### Start Automatically With Windows
 
-The application will instantly calculate the current 6-digit code and input it into the field.
+```bash
+python setup_startup.py
+```
+
+This lets you enable or disable launching the script automatically at login.
+
+### Paste a Code
+
+While the script is running:
+
+1. Open the page or app where the TOTP code is required.
+2. Place the cursor in the code input field.
+3. Press `Ctrl + Alt + A`.
+
+The current TOTP code will be generated and typed automatically.
